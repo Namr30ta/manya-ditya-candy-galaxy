@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#7957d5">
+<title>Candy Galaxy</title>
+<style>
+:root {
+  --ink:#38245f; --purple:#7957d5; --pink:#ff6fae; --gold:#ffd45c;
+  --panel:rgba(255,255,255,.91); --shadow:0 16px 40px rgba(75,42,130,.20);
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink)}
+body{
+  min-height:100vh; min-height:100dvh; padding:16px 12px 26px;
+  background:
+    radial-gradient(circle at 12% 8%,rgba(255,255,255,.85) 0 2px,transparent 3px),
+    radial-gradient(circle at 83% 18%,rgba(255,255,255,.8) 0 3px,transparent 4px),
+    radial-gradient(circle at 22% 78%,rgba(255,255,255,.65) 0 2px,transparent 3px),
+    linear-gradient(145deg,#ffd6ec 0%,#d8c9ff 48%,#b7edff 100%);
+  background-size:180px 180px,220px 220px,160px 160px,auto;
+  display:flex;justify-content:center;align-items:flex-start;overflow-x:hidden;
+}
+button{font:inherit}
+.app{width:min(100%,480px);margin:auto}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin:0 2px 12px}
+.brand{display:flex;align-items:center;gap:9px;font-weight:1000;font-size:clamp(20px,6vw,27px);letter-spacing:-.8px;color:#57349e;text-shadow:0 2px #fff}
+.brand-mark{width:42px;height:42px;border-radius:15px;background:linear-gradient(145deg,#ff8ec4,#9a75ff);display:grid;place-items:center;box-shadow:0 5px 0 #8055bd;font-size:25px}
+.icon-btn{border:0;width:42px;height:42px;border-radius:15px;background:rgba(255,255,255,.8);box-shadow:0 4px 0 rgba(103,73,157,.16);font-size:20px;color:var(--ink);cursor:pointer}
+.panel{background:var(--panel);border:1px solid rgba(255,255,255,.9);border-radius:25px;box-shadow:var(--shadow);padding:16px}
+.hero{text-align:center;margin-bottom:12px}
+.eyebrow{font-size:11px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#a15ac3}
+h1{font-size:clamp(29px,8vw,39px);line-height:1.05;margin:5px 0;color:#633eb0;letter-spacing:-1.4px}
+.subtitle{margin:6px 0 0;color:#786995;font-size:13px;font-weight:600}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.stat{background:linear-gradient(145deg,#fff,#f4edff);border:1px solid #eee3ff;border-radius:16px;text-align:center;padding:9px 4px}
+.stat small{display:block;color:#927eae;font-size:10px;font-weight:900;letter-spacing:1px}
+.stat strong{display:block;font-size:23px;line-height:1.25;color:#603bb0}
+.goal-wrap{margin:0 1px 12px}
+.goal-label{display:flex;justify-content:space-between;font-size:12px;font-weight:800;color:#755c9c;margin-bottom:5px}
+.progress{height:10px;border-radius:20px;background:#eee5ff;overflow:hidden;box-shadow:inset 0 2px 3px #d9c9f1}
+.progress-fill{height:100%;width:0;background:linear-gradient(90deg,#ff77b6,#ffca60);border-radius:20px;transition:width .25s}
+.board-shell{background:linear-gradient(145deg,#8c68d7,#6544ae);padding:7px;border-radius:20px;box-shadow:inset 0 2px 3px #ffffff70,0 7px 0 #543693;touch-action:pan-y}
+#board{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px;touch-action:pan-y;user-select:none}
+.cell{border:0;border-radius:10px;aspect-ratio:1;min-width:0;padding:0;display:grid;place-items:center;background:rgba(255,255,255,.20);position:relative;cursor:pointer;overflow:hidden;-webkit-tap-highlight-color:transparent;transition:transform .12s,background .12s}
+.cell:focus-visible{outline:3px solid #fff;outline-offset:-3px}
+.cell.selected{background:#ffe17d;box-shadow:inset 0 0 0 3px #fff,0 0 0 2px #ff9b38;transform:scale(.92)}
+.candy{font-size:clamp(20px,6.5vw,33px);line-height:1;filter:drop-shadow(0 2px 1px #57336b35);transition:transform .12s;pointer-events:none}
+.cell.pop .candy{animation:pop .22s ease forwards}
+.cell.fresh .candy{animation:drop .22s ease}
+.cell.hint{animation:hint .65s ease-in-out 2}
+.special{position:absolute;right:1px;top:0;font-size:10px;line-height:1.1;background:#fff;color:#7043bb;border-radius:5px;padding:1px 3px;font-weight:1000}
+@keyframes pop{to{transform:scale(.15) rotate(35deg);opacity:0}}
+@keyframes drop{from{transform:translateY(-24px);opacity:.3}to{transform:translateY(0);opacity:1}}
+@keyframes hint{50%{transform:scale(.86);filter:brightness(1.25)}}
+.actions{display:flex;gap:8px;margin-top:14px}
+.action{flex:1;border:0;border-radius:15px;padding:12px 7px;font-weight:900;font-size:13px;cursor:pointer;color:#6945a7;background:#f1eaff;box-shadow:0 4px 0 #ded0f6}
+.action.primary{color:white;background:linear-gradient(100deg,#ff70ae,#9a6cff);box-shadow:0 4px 0 #7851c2}
+.action:disabled{opacity:.45;cursor:not-allowed}
+.tip{text-align:center;color:#8978a2;font-size:11px;font-weight:650;margin:12px 3px 0;line-height:1.4}
+.footer{text-align:center;color:#856fa5;font-size:11px;font-weight:700;margin:15px 0 0}
+.overlay{position:fixed;inset:0;background:rgba(46,25,79,.48);display:none;align-items:center;justify-content:center;padding:18px;z-index:5;backdrop-filter:blur(5px)}
+.overlay.show{display:flex}
+.dialog{width:min(100%,390px);background:#fff;border-radius:26px;padding:23px;text-align:center;box-shadow:0 20px 60px #2c164a55;animation:appear .22s ease}
+@keyframes appear{from{transform:translateY(12px) scale(.96);opacity:0}to{transform:none;opacity:1}}
+.dialog .big{font-size:54px}
+.dialog h2{margin:5px 0;color:#663db0;font-size:27px}
+.dialog p{color:#7f6b99;font-size:14px;line-height:1.5}
+.dialog-buttons{display:flex;gap:9px;margin-top:17px}
+.dialog-buttons button{flex:1;border:0;border-radius:14px;padding:12px 8px;font-weight:900;cursor:pointer}
+.dialog-buttons .go{background:linear-gradient(100deg,#ff70ae,#9a6cff);color:white}
+.dialog-buttons .later{background:#f0eaff;color:#6845a4}
+.level-dots{display:flex;justify-content:center;gap:5px;margin-top:10px}
+.level-dots span{width:7px;height:7px;border-radius:50%;background:#e5d8f7}
+.level-dots span.done{background:#ffbd4a}
+.toast{position:fixed;top:14px;left:50%;transform:translate(-50%,-100px);background:#52328d;color:white;padding:10px 17px;border-radius:30px;font-weight:850;font-size:13px;z-index:8;box-shadow:0 6px 20px #3d226855;transition:transform .25s;white-space:nowrap}
+.toast.show{transform:translate(-50%,0)}
+@media(max-width:360px){.panel{padding:12px}.board-shell{padding:5px}#board{gap:3px}.cell{border-radius:7px}.candy{font-size:clamp(18px,6vw,25px)}}
+@media(min-height:850px){.app{margin-top:3vh}}
+
+/* Light mint board background: improves contrast for blueberries and grapes */
+.board, #board, .game-board {
+  background-color: #EAF8EE !important;
+}
+
+</style>
+</head>
+<body>
+<main class="app">
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">🍬</span> Manya &amp; Ditya's Candy Galaxy</div>
+    <button class="icon-btn" id="soundBtn" aria-label="Toggle sound" title="Sound on/off">🔊</button>
+  </header>
+
+  <section class="panel">
+    <div class="hero">
+      <div class="eyebrow">Sweet puzzle adventure</div>
+      <h1>Let's Match, Manya &amp; Ditya! 💕</h1>
+      <p class="subtitle">A sweet puzzle adventure made especially for Manya &amp; Ditya! 🍬🌈</p>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><small>⭐ LEVEL</small><strong id="level">1</strong></div>
+      <div class="stat"><small>🍭 SCORE</small><strong id="score">0</strong></div>
+      <div class="stat"><small>👟 MOVES</small><strong id="moves">25</strong></div>
+    </div>
+
+    <div class="goal-wrap">
+      <div class="goal-label"><span>Level goal</span><span id="goalText">0 / 1,000</span></div>
+      <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+
+    <div class="board-shell"><div id="board" role="group" aria-label="Candy matching board"></div></div>
+
+    <div class="actions">
+      <button class="action" id="hintBtn">💡 Hint</button>
+      <button class="action" id="shuffleBtn">🔀 Shuffle</button>
+      <button class="action primary" id="newBtn">↻ Restart</button>
+    </div>
+    <p class="tip">Tap one candy, then tap a neighbouring candy to swap.<br>Match 3 or more of the same candy. 4 or 5 make special candies!</p>
+  </section>
+  <div class="footer">🌈 Made especially for Manya &amp; Ditya • Your best: <span id="best">0</span></div>
+</main>
+
+<div class="toast" id="toast"></div>
+<div class="overlay" id="overlay" role="dialog" aria-modal="true">
+  <div class="dialog">
+    <div class="big" id="dialogEmoji">🎉</div>
+    <h2 id="dialogTitle">Level complete!</h2>
+    <p id="dialogText">Wonderful matching!</p>
+    <div class="level-dots" id="levelDots"></div>
+    <div class="dialog-buttons">
+      <button class="later" id="closeDialog">Keep playing</button>
+      <button class="go" id="dialogGo">Next level ➜</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const N = 8;
+  const CANDIES = ["🍓","🍋","🍇","🍊","🫐","🍏"];
+  const LEVEL_MOVES = 25;
+  const boardEl = document.getElementById("board");
+  const $ = id => document.getElementById(id);
+  let board = [], score = 0, moves = LEVEL_MOVES, level = 1;
+  let selected = null, busy = false, ended = false, soundOn = true;
+  let audioContext = null, toastTimer = null, hintTimer = null;
+  let best = Number(localStorage.getItem("candyGalaxyBest") || 0);
+  $("best").textContent = best.toLocaleString();
+
+  const goalFor = lv => 900 + (lv - 1) * 450;
+  const movesFor = lv => Math.max(18, LEVEL_MOVES - Math.floor((lv - 1) / 2));
+  const randomType = () => Math.floor(Math.random() * CANDIES.length);
+  const key = (r,c) => `${r},${c}`;
+
+  function tone(freq=520, duration=.08, type="sine") {
+    if (!soundOn) return;
+    try {
+      audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
+      if (audioContext.state === "suspended") audioContext.resume();
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      osc.type = type; osc.frequency.value = freq;
+      gain.gain.setValueAtTime(.0001, audioContext.currentTime);
+      gain.gain.exponentialRampToValueAtTime(.10, audioContext.currentTime + .012);
+      gain.gain.exponentialRampToValueAtTime(.0001, audioContext.currentTime + duration);
+      osc.connect(gain); gain.connect(audioContext.destination);
+      osc.start(); osc.stop(audioContext.currentTime + duration + .02);
+    } catch (_) {}
+  }
+  function soundMatch() { tone(660,.08); setTimeout(()=>tone(880,.11),65); }
+  function showToast(text) {
+    $("toast").textContent = text;
+    $("toast").classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>$("toast").classList.remove("show"),1800);
+  }
+  function updateStats() {
+    $("level").textContent = level;
+    $("score").textContent = score.toLocaleString();
+    $("moves").textContent = moves;
+    $("goalText").textContent = `${score.toLocaleString()} / ${goalFor(level).toLocaleString()}`;
+    $("progressFill").style.width = `${Math.min(100, score / goalFor(level) * 100)}%`;
+    if (score > best) {
+      best = score;
+      localStorage.setItem("candyGalaxyBest", String(best));
+      $("best").textContent = best.toLocaleString();
+    }
+  }
+  function emptyBoard() {
+    board = Array.from({length:N},()=>Array(N).fill(null));
+    for (let r=0;r<N;r++) for (let c=0;c<N;c++) {
+      let t;
+      do {
+        t = randomType();
+      } while (
+        (c>=2 && board[r][c-1]?.type===t && board[r][c-2]?.type===t) ||
+        (r>=2 && board[r-1][c]?.type===t && board[r-2][c]?.type===t)
+      );
+      board[r][c] = {type:t, special:null};
+    }
+  }
+  function matchesNow() {
+    const found = new Set();
+    // Horizontal runs
+    for (let r=0;r<N;r++) {
+      let start=0;
+      for (let c=1;c<=N;c++) {
+        if (c<N && board[r][c] && board[r][start] &&
+            board[r][c].type===board[r][start].type) continue;
+        if (c-start>=3) for(let x=start;x<c;x++) found.add(key(r,x));
+        start=c;
+      }
+    }
+    // Vertical runs
+    for (let c=0;c<N;c++) {
+      let start=0;
+      for (let r=1;r<=N;r++) {
+        if (r<N && board[r][c] && board[start][c] &&
+            board[r][c].type===board[start][c].type) continue;
+        if (r-start>=3) for(let x=start;x<r;x++) found.add(key(x,c));
+        start=r;
+      }
+    }
+    return found;
+  }
+  function hasMove() {
+    for(let r=0;r<N;r++) for(let c=0;c<N;c++) {
+      for(const [dr,dc] of [[0,1],[1,0]]) {
+        const rr=r+dr,cc=c+dc;
+        if(rr>=N||cc>=N) continue;
+        swapData(r,c,rr,cc);
+        const yes=matchesNow().size>0;
+        swapData(r,c,rr,cc);
+        if(yes) return true;
+      }
+    }
+    return false;
+  }
+  function swapData(r1,c1,r2,c2) {
+    [board[r1][c1],board[r2][c2]]=[board[r2][c2],board[r1][c1]];
+  }
+  function render() {
+    boardEl.innerHTML="";
+    for(let r=0;r<N;r++) for(let c=0;c<N;c++) {
+      const item=board[r][c];
+      const cell=document.createElement("button");
+      cell.type="button"; cell.className="cell";
+      cell.setAttribute("aria-label",`Row ${r+1}, column ${c+1}, ${item ? CANDIES[item.type] : "empty"}`);
+      if(selected && selected.r===r && selected.c===c) cell.classList.add("selected");
+      if(item) {
+        const candy=document.createElement("span");
+        candy.className="candy"; candy.textContent=CANDIES[item.type];
+        cell.appendChild(candy);
+        if(item.special) {
+          const badge=document.createElement("span");
+          badge.className="special";
+          badge.textContent=item.special==="rainbow"?"★":"↔";
+          cell.appendChild(badge);
+        }
+      }
+      cell.addEventListener("click",()=>tapCell(r,c));
+      boardEl.appendChild(cell);
+    }
+    updateStats();
+  }
+  function areAdjacent(a,b) { return Math.abs(a.r-b.r)+Math.abs(a.c-b.c)===1; }
+  function tapCell(r,c) {
+    if(busy||ended) return;
+    if(!selected) { selected={r,c}; render(); return; }
+    if(selected.r===r&&selected.c===c) { selected=null; render(); return; }
+    const first=selected, second={r,c}; selected=null;
+    if(!areAdjacent(first,second)) { selected=second; render(); return; }
+    swap(first,second);
+  }
+  async function swap(a,b) {
+    busy=true;
+    swapData(a.r,a.c,b.r,b.c);
+    render();
+    await wait(100);
+    const found=matchesNow();
+    if(!found.size && !board[a.r][a.c].special && !board[b.r][b.c].special) {
+      swapData(a.r,a.c,b.r,b.c);
+      render(); busy=false; tone(180,.07);
+      showToast("No match this time. Try again! 💜");
+      return;
+    }
+    moves--;
+    try {
+      await processMatches(found, [a,b]);
+    } catch (error) {
+      console.error("Candy Galaxy move error:", error);
+      busy = false;
+      selected = null;
+      render();
+      showToast("Oops! Please try that move again.");
+    }
+  }
+  const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+
+  function expandSpecials(found) {
+    const queue=[...found];
+    while(queue.length) {
+      const pos=queue.pop(), [r,c]=pos.split(",").map(Number), item=board[r][c];
+      if(!item?.special) continue;
+      if(item.special==="rainbow") {
+        const target = board[r][c].type;
+        for(let y=0;y<N;y++) for(let x=0;x<N;x++)
+          if(board[y][x]?.type===target && !found.has(key(y,x))) {
+            found.add(key(y,x)); queue.push(key(y,x));
+          }
+      } else if(item.special==="stripe") {
+        for(let x=0;x<N;x++) if(!found.has(key(r,x))) {found.add(key(r,x));queue.push(key(r,x));}
+        for(let y=0;y<N;y++) if(!found.has(key(y,c))) {found.add(key(y,c));queue.push(key(y,c));}
+      }
+    }
+    return found;
+  }
+  function chooseSpecial(found, swapped) {
+    // swapped entries are {r, c} objects, not [row, column] arrays.
+    // Read the coordinates as properties so 4- and 5-candy matches
+    // cannot throw an error and leave the board locked.
+    if (!swapped || !swapped[1]) return null;
+    const {r, c} = swapped[1];
+    if (found.size >= 5) return {r, c, special:"rainbow"};
+    if (found.size === 4) return {r, c, special:"stripe"};
+    return null;
+  }
+  async function processMatches(initial, swapped=[]) {
+    let found=new Set(initial);
+    // A special candy can also be activated by swapping it even if no regular run formed.
+    for(const p of swapped) {
+      const item=board[p.r][p.c];
+      if(item?.special) found.add(key(p.r,p.c));
+    }
+    if(!found.size) {busy=false;return;}
+    let cascade=0;
+    while(found.size) {
+      found=expandSpecials(found);
+      const special=chooseSpecial(found,swapped);
+      const points=found.size*20;
+      score+=points;
+      soundMatch();
+      const cells=[...boardEl.children];
+      for(const pos of found) {
+        const [r,c]=pos.split(",").map(Number);
+        cells[r*N+c]?.classList.add("pop");
+      }
+      await wait(220);
+      for(const pos of found) {
+        const [r,c]=pos.split(",").map(Number);
+        board[r][c]=null;
+      }
+      if(special) board[special.r][special.c]={type:randomType(),special:special.special};
+      // Gravity: compact each column downwards.
+      for(let c=0;c<N;c++) {
+        let write=N-1;
+        for(let r=N-1;r>=0;r--) if(board[r][c]) {
+          if(write!==r) {board[write][c]=board[r][c];board[r][c]=null;}
+          write--;
+        }
+        for(let r=write;r>=0;r--) board[r][c]={type:randomType(),special:null};
+      }
+      render();
+      await wait(190);
+      found=matchesNow();
+      cascade++;
+      if(cascade>12) break; // Safety guard against endless cascades.
+      swapped=[];
+    }
+    busy=false;
+    if(score>=goalFor(level)) { finishLevel(true); return; }
+    if(moves<=0) { finishLevel(false); return; }
+    if(!hasMove()) {
+      shuffleBoard(false);
+      showToast("Board shuffled — new moves! 🔀");
+    }
+  }
+  function shuffleBoard(announce=true) {
+    if(busy||ended) return;
+    const all=board.flat().map(x=>x?.type ?? randomType());
+    let attempts=0;
+    do {
+      for(let i=all.length-1;i>0;i--) {
+        const j=Math.floor(Math.random()*(i+1));
+        [all[i],all[j]]=[all[j],all[i]];
+      }
+      board=Array.from({length:N},(_,r)=>Array.from({length:N},(_,c)=>({type:all[r*N+c],special:null})));
+      attempts++;
+    } while((matchesNow().size>0||!hasMove())&&attempts<100);
+    selected=null; render();
+    if(announce) showToast("Fresh candy mix! 🍬");
+  }
+  function finishLevel(won) {
+    ended=true; busy=false;
+    $("dialogEmoji").textContent=won?"🏆":"💖";
+    $("dialogTitle").textContent=won?"Level complete!":"Good try!";
+    $("dialogText").textContent=won
+      ? `Amazing! You reached ${score.toLocaleString()} points. Ready for level ${level+1}?`
+      : `You scored ${score.toLocaleString()} points. Try again and beat the goal of ${goalFor(level).toLocaleString()}!`;
+    $("dialogGo").textContent=won?"Next level ➜":"Try again ↻";
+    $("closeDialog").textContent=won?"Review board":"Close";
+    $("levelDots").innerHTML="";
+    for(let i=0;i<3;i++) {
+      const dot=document.createElement("span");
+      if(won) dot.className="done";
+      $("levelDots").appendChild(dot);
+    }
+    $("overlay").classList.add("show");
+    tone(won?880:260,.22);
+  }
+  function closeDialog() { $("overlay").classList.remove("show"); }
+  function nextOrRetry() {
+    closeDialog();
+    if(score>=goalFor(level)) level++;
+    startLevel();
+  }
+  function startLevel() {
+    score=0; moves=movesFor(level); selected=null; busy=false; ended=false;
+    emptyBoard();
+    // Defensive cleanup in case a generated board contains a match.
+    while(matchesNow().size) emptyBoard();
+    render();
+    showToast(`Level ${level} — let's play! 🌟`);
+  }
+  function restart() {
+    if(busy) return;
+    startLevel();
+  }
+  function hint() {
+    if(busy||ended) return;
+    const options=[];
+    for(let r=0;r<N;r++) for(let c=0;c<N;c++) for(const [dr,dc] of [[0,1],[1,0]]) {
+      const rr=r+dr,cc=c+dc;
+      if(rr>=N||cc>=N) continue;
+      swapData(r,c,rr,cc);
+      if(matchesNow().size) options.push([[r,c],[rr,cc]]);
+      swapData(r,c,rr,cc);
+    }
+    if(!options.length) {shuffleBoard(false);showToast("Shuffled for a fresh start!");return;}
+    const pair=options[Math.floor(Math.random()*options.length)];
+    render();
+    const cells=[...boardEl.children];
+    pair.forEach(([r,c])=>cells[r*N+c]?.classList.add("hint"));
+    showToast("Try swapping the glowing candies! 💡");
+  }
+  $("hintBtn").addEventListener("click",hint);
+  $("shuffleBtn").addEventListener("click",()=>shuffleBoard(true));
+  $("newBtn").addEventListener("click",restart);
+  $("closeDialog").addEventListener("click",closeDialog);
+  $("dialogGo").addEventListener("click",nextOrRetry);
+  $("soundBtn").addEventListener("click",()=>{
+    soundOn=!soundOn;
+    $("soundBtn").textContent=soundOn?"🔊":"🔇";
+    showToast(soundOn?"Sound on":"Sound off");
+    if(soundOn) tone(660,.08);
+  });
+  $("overlay").addEventListener("click",e=>{if(e.target===$("overlay"))closeDialog();});
+  startLevel();
+})();
+</script>
+</body>
+</html>
